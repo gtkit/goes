@@ -18,10 +18,6 @@ type EsSearch struct {
 	From         int // 分页
 	Size         int // 每页的数量
 }
-type Es struct {
-	Index  string
-	Client *elastic.Client
-}
 
 // 检查索引是否存在
 func CheckIndex(index string) error {

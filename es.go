@@ -7,8 +7,6 @@ import (
 
 	"github.com/olivere/elastic/v7"
 	"golang.org/x/net/context"
-
-	"gitlab.superjq.com/go-tools/logger"
 )
 
 type Option struct {
@@ -40,7 +38,6 @@ func New(opt *Option) *elastic.Client {
 
 func InitEsClient() *elastic.Client {
 	esurls := getEsUrl()
-	sc := esopt.Scheme
 
 	esoptions := getBaseOptions(esopt.User, esopt.Pass, esurls...)
 
@@ -48,8 +45,8 @@ func InitEsClient() *elastic.Client {
 		esoptions = append(esoptions, elastic.SetInfoLog(esLog))
 	}
 
-	if len(sc) > 0 {
-		esoptions = append(esoptions, elastic.SetScheme(sc))
+	if len(esopt.Scheme) > 0 {
+		esoptions = append(esoptions, elastic.SetScheme(esopt.Scheme))
 		esoptions = append(esoptions, elastic.SetHealthcheck(false))
 	}
 
@@ -66,7 +63,7 @@ func InitEsClient() *elastic.Client {
 			fmt.Println("es ping err: ", err.Error())
 			panic(err)
 		}
-		logger.Infof("Elasticsearch init code %d and version %s\n", code, info.Version.Number)
+		esLog.Printf("Elasticsearch init code %d and version %s\n", code, info.Version.Number)
 	}
 	esclient = es
 
