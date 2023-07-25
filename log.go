@@ -2,7 +2,7 @@
 package goes
 
 import (
-	"gitlab.superjq.com/go-tools/logger"
+	"github.com/gtkit/logger"
 	"go.uber.org/zap"
 )
 
