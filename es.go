@@ -3,6 +3,8 @@ package goes
 import (
 	"bytes"
 	"fmt"
+	"net"
+	"net/http"
 	"time"
 
 	"github.com/olivere/elastic/v7"
@@ -88,6 +90,19 @@ func getEsUrl() []string {
 
 func getBaseOptions(username, password string, urls ...string) []elastic.ClientOptionFunc {
 	options := make([]elastic.ClientOptionFunc, 0)
+	httpClient := &http.Client{}
+	httpClient.Transport = &http.Transport{
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second, // 连接超时时间
+			KeepAlive: 30 * time.Second, // 长连接超时时间
+		}).DialContext,
+
+		MaxIdleConnsPerHost:   100,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+	}
+	options = append(options, elastic.SetHttpClient(&http.Client{}))
 	// elasticsearch 服务地址，多个服务地址放在切片中
 	options = append(options, elastic.SetURL(urls...))
 	// 基于http base auth验证机制的账号和密码
