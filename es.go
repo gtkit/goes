@@ -2,7 +2,6 @@ package goes
 
 import (
 	"bytes"
-	"fmt"
 	"net"
 	"net/http"
 	"time"
@@ -35,6 +34,13 @@ func New(opt *Option) *elastic.Client {
 	} else {
 		esLog = opt.Log
 	}
+	if opt.Host == "" {
+		panic("Elasticsearch host is empty")
+	}
+
+	if opt.Port == "" {
+		panic("Elasticsearch port is empty")
+	}
 
 	return InitEsClient()
 
@@ -56,7 +62,7 @@ func InitEsClient() *elastic.Client {
 
 	es, err := elastic.NewClient(esoptions...)
 	if err != nil {
-		esLog.Printf("new es client err : %s", err.Error())
+		esLog.Printf("New Elasticsearch client err : %s", err.Error())
 		panic(err)
 	}
 
@@ -64,10 +70,10 @@ func InitEsClient() *elastic.Client {
 	for _, eu := range esurls {
 		info, code, err := es.Ping(eu).Do(context.Background())
 		if err != nil {
-			fmt.Println("es ping err: ", err.Error())
+			esLog.Printf("Elasticsearch ping err: %s", err.Error())
 			panic(err)
 		}
-		esLog.Printf("Elasticsearch init code %d and version %s\n", code, info.Version.Number)
+		esLog.Printf("Elasticsearch init Success code %d and version %s\n", code, info.Version.Number)
 	}
 	esclient = es
 
