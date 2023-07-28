@@ -17,23 +17,25 @@ type Option struct {
 	User, // 用户名
 	Pass, // 密码
 	Scheme string
-	Debug int    // 是否开启 debug 日志
-	Log   Logger // 日志实例,默认使用 zap log
+	Debug int            // 是否开启 debug 日志
+	Log   elastic.Logger // 日志实例,默认使用 zap log
 }
 
 var (
 	esclient *elastic.Client
 	esopt    *Option
-	esLog    Logger
+	esLog    elastic.Logger
 )
 
 func New(opt *Option) *elastic.Client {
 	esopt = opt
 	if opt.Log == nil {
-		esLog = newLogger()
+		initlogger()
+		esLog = &esLogger{}
 	} else {
 		esLog = opt.Log
 	}
+
 	return InitEsClient()
 
 }
@@ -43,7 +45,7 @@ func InitEsClient() *elastic.Client {
 
 	esoptions := getBaseOptions(esopt.User, esopt.Pass, esurls...)
 
-	if esopt.Debug == 1 {
+	if esopt.Debug == 1 && esopt.Log != nil {
 		esoptions = append(esoptions, elastic.SetInfoLog(esLog))
 	}
 

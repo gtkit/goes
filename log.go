@@ -3,24 +3,16 @@ package goes
 
 import (
 	"github.com/gtkit/logger"
-	"go.uber.org/zap"
+	"github.com/olivere/elastic/v7"
 )
 
-type Logger interface {
-	Printf(format string, v ...interface{})
+var _ elastic.Logger = (*esLogger)(nil)
+
+type esLogger struct {
 }
 
-type EsLogger struct {
-	ZapLogger *zap.Logger
-}
-
-func (l EsLogger) Printf(format string, v ...interface{}) {
-	l.ZapLogger.Sugar().Infof("[ES] "+format, v...)
-}
-
-func newLogger() EsLogger {
-	initlogger()
-	return EsLogger{ZapLogger: logger.Zlog()}
+func (l esLogger) Printf(format string, v ...interface{}) {
+	logger.Infof("[ES] "+format, v...)
 }
 
 func initlogger() {
@@ -31,4 +23,13 @@ func initlogger() {
 		}
 		logger.NewZap(opt)
 	}
+}
+
+// NewEsLogger 创建 es 日志实例
+func SetEsLogger(logger elastic.Logger) elastic.Logger {
+	if logger != nil {
+		return logger
+	}
+	initlogger()
+	return &esLogger{}
 }
