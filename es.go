@@ -23,17 +23,10 @@ type Option struct {
 var (
 	esclient *elastic.Client
 	esopt    *Option
-	esLog    elastic.Logger
 )
 
 func New(opt *Option) *elastic.Client {
 	esopt = opt
-	if opt.Log == nil {
-		initlogger()
-		esLog = &esLogger{}
-	} else {
-		esLog = opt.Log
-	}
 	if opt.Host == "" {
 		panic("Elasticsearch host is empty")
 	}
@@ -52,7 +45,7 @@ func InitEsClient() *elastic.Client {
 	esoptions := getBaseOptions(esopt.User, esopt.Pass, esurls...)
 
 	if esopt.Debug == 1 && esopt.Log != nil {
-		esoptions = append(esoptions, elastic.SetInfoLog(esLog))
+		esoptions = append(esoptions, elastic.SetInfoLog(esopt.Log))
 	}
 
 	if len(esopt.Scheme) > 0 {
@@ -61,8 +54,9 @@ func InitEsClient() *elastic.Client {
 	}
 
 	es, err := elastic.NewClient(esoptions...)
+
 	if err != nil {
-		esLog.Printf("New Elasticsearch client err : %s", err.Error())
+		log("New Elasticsearch client err : %s", err.Error())
 		panic(err)
 	}
 
@@ -70,10 +64,10 @@ func InitEsClient() *elastic.Client {
 	for _, eu := range esurls {
 		info, code, err := es.Ping(eu).Do(context.Background())
 		if err != nil {
-			esLog.Printf("Elasticsearch ping err: %s", err.Error())
+			log("Elasticsearch ping err: %s", err.Error())
 			panic(err)
 		}
-		esLog.Printf("Elasticsearch init Success code %d and version %s\n", code, info.Version.Number)
+		log("Elasticsearch init Success code %d and version %s\n", code, info.Version.Number)
 	}
 	esclient = es
 
@@ -119,8 +113,16 @@ func getBaseOptions(username, password string, urls ...string) []elastic.ClientO
 	// 开启Sniff，SDK会定期(默认15分钟一次)嗅探集群中全部节点，将全部节点都加入到连接列表中，
 	// 后续新增的节点也会自动加入到可连接列表，但实际生产中我们可能会设置专门的协调节点，所以默认不开启嗅探
 	options = append(options, elastic.SetSniff(false))
-	options = append(options, elastic.SetErrorLog(esLog))
+	if esopt.Log != nil {
+		options = append(options, elastic.SetErrorLog(esopt.Log))
+	}
 	options = append(options, elastic.SetGzip(true))
 	return options
 
+}
+
+func log(format string, v ...interface{}) {
+	if esopt.Log != nil {
+		esopt.Log.Printf(format, v)
+	}
 }

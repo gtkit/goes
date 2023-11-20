@@ -24,7 +24,7 @@ func CheckIndex(index string) error {
 	ctx := context.Background()
 	exists, err := esclient.IndexExists(index).Do(ctx)
 	if err != nil {
-		esLog.Printf("userEs init exist failed err is %s\n", err)
+		log("userEs init exist failed err is %s\n", err)
 		return err
 	}
 	if !exists {
